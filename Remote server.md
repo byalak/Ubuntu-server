@@ -10,7 +10,7 @@ cek status:
 ```bash
 systemctl status ssh
 ```
-Pastikan statusnya active (running). Jika belum aktifkan lebih dulu.
+Pastikan statusnya active (running). Jika belum, aktifkan lebih dulu.
 ```bash
 systemctl enable --now ssh
 ```
