@@ -55,5 +55,23 @@ Jalankan:
 ```bash
 certbot --apache -d klandestin.site -d www.klandestin.site
 ```
+Ikuti instruksi dan pilih redirect ke HTTPS.
 
+Tambahkan corn job untuk otomatis renew
+Jalankan:
+```bash
+crontab -e
+```
+Tambahkan baris berikut untuk menjalankan perpanjangan otomatis 1 kali sehari:
+```bash
+0 3 * * * certbot renew --quiet --deploy-hook "systemctl reload apache2"
+```
+Penjelasan:
 
+0 3 * * * → Cron akan berjalan pukul 03:00 setiap hari
+
+--quiet → Menyembunyikan output kecuali ada error
+
+--deploy-hook → Reload web server setelah sertifikat diperbarui
+## Uji Web Server
+![Screenshot 2025-04-19 134137](https://github.com/user-attachments/assets/6a8c85df-279f-49c0-9eef-29793d82c4c8)
