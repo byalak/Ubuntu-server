@@ -11,6 +11,12 @@ Pastikan statusnya active (running). Jika belum, aktifkan lebih dulu:
 ```bash
 systemctl enable --now apache2
 ```
+## Firewall
+Aktifkan firewall untuk hardening:
+```bash
+ufw allow 80/tcp
+ufw enable
+```
 ## Uji web server
 Buka browser dan akses IP VPS kamu:
 ![Screenshot 2025-04-18 161652](https://github.com/user-attachments/assets/e212fe49-28c3-41a9-aa95-d97cb1398d3d)
@@ -74,5 +80,12 @@ Penjelasan:
 --quiet → Menyembunyikan output kecuali ada error
 
 --deploy-hook → Reload web server setelah sertifikat diperbarui
+## Firewall
+Blokir port HTTP dan Ijinkan port HTTPS:
+```bash
+ufw deny 80/tcp
+ufw allow 443/tcp
+ufw enable
+```
 ## Uji Web Server
 ![Screenshot 2025-04-19 134137](https://github.com/user-attachments/assets/6a8c85df-279f-49c0-9eef-29793d82c4c8)
