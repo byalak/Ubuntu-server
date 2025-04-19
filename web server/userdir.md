@@ -44,70 +44,93 @@ http://klandestin.site/~user1
 http://202.10.36.17/~user1
 ![Screenshot 2025-04-19 155104](https://github.com/user-attachments/assets/31b30549-1c44-45ed-9e2f-35ea9915244c)
 
-## Basic Authentication
-Buat file auth untuk user1
+# Basic Authentication
+## Aktifkan module apache
 ```bash
-htpasswd -c /etc/apache2/.htpasswd user1
+sudo a2enmod ssl rewrite headers auth_basic
+sudo systemctl reload apache2
 ```
-Buat file auth untuk user2
+## Setup VirtualHost
+Buat file konfigurasi
 ```bash
-htpasswd -c /etc/apache2/.htpasswd user2
+nano /etc/apache2/sites-available/user1.klandestin.site.conf
 ```
-## Konfigurasi VirtualHost dengan subdomain + Auth
-Buat file: /etc/apache2/sites-available/user1.klandestin.site.conf
+Isi:
 ```bash
 <VirtualHost *:80>
-    ServerName user1.domain.com
+    ServerName user1.klandestin.site
     DocumentRoot /home/user1/public_html
 
     <Directory /home/user1/public_html>
-        Options Indexes FollowSymLinks
+        Options -Indexes +FollowSymLinks
         AllowOverride All
-        Require all granted
-
-        AuthType Basic
-        AuthName "Restricted Content"
-        AuthUserFile /etc/apache2/.htpasswd
-        Require user user1
     </Directory>
-ErrorLog ${APACHE_LOG_DIR}/user1_error.log
-CustomLog ${APACHE_LOG_DIR}/user1_access.log combined
+
+    ErrorLog ${APACHE_LOG_DIR}/user1_error.log
+    CustomLog ${APACHE_LOG_DIR}/user1_access.log combined
 </VirtualHost>
 ```
-Buat file: /etc/apache2/sites-available/user2.klandestin.site.conf
+Aktifkan dan reload
 ```bash
-<VirtualHost *:80>
-    ServerName user2.domain.com
-    DocumentRoot /home/user2/public_html
-
-    <Directory /home/user1/public_html>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-
-        AuthType Basic
-        AuthName "Restricted Content"
-        AuthUserFile /etc/apache2/.htpasswd
-        Require user user1
-    </Directory>
-ErrorLog ${APACHE_LOG_DIR}/user2_error.log
-CustomLog ${APACHE_LOG_DIR}/user2_access.log combined
-</VirtualHost>
-```
-## Enable Site dan Restart
-```bash
-sudo a2ensite user1.domain.com.conf
-sudo a2ensite user2.domain.com.conf
+sudo a2ensite user1.klandestin.site.conf
 sudo systemctl reload apache2
 ```
 ## Update DNS
-Arahkan subdomain dipanel DNS kamu ke IP Server:
-![Screenshot 2025-04-19 163619](https://github.com/user-attachments/assets/774e2419-1029-428e-90ec-00407b4eed8d)
-Lakukan juga untuk user2
-
-## Pasang TLS (HTTPS) dengan Let's Encrypt
+Arahkan subdomain kamu ke IP VPS:
+![Screenshot 2025-04-19 163619](https://github.com/user-attachments/assets/a30b0486-3562-483f-9d0c-793a5f5e9f0d)
+## Pasang TLS/SSL dengan certbot
+Jalankan perintah:
 ```bash
-certbot --apache
+certbot --apache -d user1.klandestin.site
 ```
-Ikuti instruksi dan pilih subdomain (user1.klandestin.site dan user2.klandestin.site)
+## Buat file .htpasswd
+```bash
+htpasswd -c -B /etc/apache2/.htpasswd user1
+```
+## Edit file konfigurasi HTTPS
+```bash
+nano /etc/apache2/sites-available/user1.klandestin.site-le-ssl.conf
+```
+Isi:
+```bash
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerName user1.klandestin.site
+    DocumentRoot /home/user1/public_html
+
+    <Directory /home/user1/public_html>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+
+        AuthType Basic
+        AuthName "Restricted Area"
+        AuthUserFile /etc/apache2/.htpasswd
+        Require user user1
+    </Directory>
+
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+        ErrorLog ${APACHE_LOG_DIR}/user1_error.log
+        CustomLog ${APACHE_LOG_DIR}/user1_access.log combined
+
+SSLCertificateFile /etc/letsencrypt/live/user1.klandestin.site/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/user1.klandestin.site/privkey.pem
+Include /etc/letsencrypt/options-ssl-apache.conf
+</VirtualHost>
+</IfModule>
+```
+Kemudian simpan dan reload:
+```bash
+systemctl reload apache2
+```
+## Uji Web Server
+Akses di browser:
+
+https://user1.klandestin.site
+
+![Screenshot 2025-04-20 001736](https://github.com/user-attachments/assets/db33c65d-81e1-4047-b4f7-30acab44d4d5)
+![Screenshot 2025-04-20 001749](https://github.com/user-attachments/assets/0c162673-4f15-4f3d-a5b3-a507a4eee974)
 
