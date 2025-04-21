@@ -33,3 +33,26 @@ Edit file konfigurasi mariadb:
 nano /etc/mysql/mariadb.conf.d/50-server.cnf
 ```
 Secara default, MariaDB hanya menerima koneksi dari localhost. Atur supaya bisa menerima IP lain Untuk remote access:
+ubah:
+```bash
+bind-address = 127.0.0.1
+```
+menjadi:
+```bash
+bind-address = 0.0.0.0
+```
+simpan dan keluar.
+
+Buat user dengan dengan batasan IP:
+```bash
+CREATE USER 'remote_user'@'192.168.1.10' IDENTIFIED BY 'PasswordKuat!';
+```
+hanya bisa login dengan IP ``` 192.168.1.10 ``` dari luar.
+
+Pastikan root hanya bisa akses dari ``` localhost ``` :
+```bash
+UPDATE mysql.user SET Host='localhost' WHERE User='root';
+FLUSH PRIVILEGES;
+```
+
+
