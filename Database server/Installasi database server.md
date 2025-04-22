@@ -28,31 +28,85 @@ Ikuti panduan:
   
 - Reload privileges
 ## Konfigurasi remote access
-Edit file konfigurasi mariadb:
+### Edit file konfigurasi mariadb:
 ```bash
 nano /etc/mysql/mariadb.conf.d/50-server.cnf
 ```
-Secara default, MariaDB hanya menerima koneksi dari localhost. Atur supaya bisa menerima IP lain Untuk remote access:
+#### Aktifkan port 3306
+```bash
+port                    = 3306
+```
+Hilangkan pagar ``` # ``` untuk mengaktifkan.
+#### Secara default, MariaDB hanya menerima koneksi dari localhost. Atur supaya bisa menerima IP lain Untuk remote access.
 ubah:
 ```bash
 bind-address = 127.0.0.1
 ```
+
 menjadi:
 ```bash
 bind-address = 0.0.0.0
 ```
+### Aktifkan SSL/TLS dengan SSL Wildcard
+```bash
+ssl-ca = /etc/letsencrypt/live/klandestin.site/chain.pem
+ssl-cert = /etc/letsencrypt/live/klandestin.site/fullchain.pem
+ssl-key = /etc/letsencrypt/live/klandestin.site/privkey.pem
+```
+Enkripsi koneksi client-server agar data tidak terbaca di jaringan.
+
 simpan dan keluar.
 
-Buat user dengan dengan batasan IP:
+### Login ke mariadb:
+```bash
+mariadb -u root -p
+```
+masukkan password root yang udah diset tadi.
+
+#### Buat user dengan dengan batasan IP:
 ```bash
 CREATE USER 'remote_user'@'192.168.1.10' IDENTIFIED BY 'PasswordKuat!';
 ```
 hanya bisa login dengan IP ``` 192.168.1.10 ``` dari luar.
 
-Pastikan root hanya bisa akses dari ``` localhost ``` :
+#### Pastikan root hanya bisa akses dari ``` localhost ``` :
 ```bash
 UPDATE mysql.user SET Host='localhost' WHERE User='root';
 FLUSH PRIVILEGES;
+EXIT
 ```
+## Konfigurasi firewall
+#### Ijinkan IP ``` 192.168.1.10 ```:
+```bash
+sudo ufw allow from 192.168.1.10 to any port 3306 proto tcp
+```
+#### Blokir semua akses ke port 3306
+```bash
+sudo ufw deny 3306
+```
+## Restart MariaDB
+```bash
+systemctl restart mariadb
+```
+## Login dari Remote Client (Command Line)
+```bash
+mysql -u user -h ipserver -p
 
+mysql remote_user -h 202.10.36.17 -p
+```
+masukkan password yang sudah dibuat.
+
+## Monitoring
+Edit file konfigurasi ``` /etc/mysql/mariadb.conf.d/50-server.cnf ``` :
+Tambahkan dan ubah:
+```bash
+general_log_file       = /var/log/mysql/mysql.log
+general_log            = 1
+log_output = FILE
+log_error = /var/log/mysql/error.log
+```
+Restart mariadb:
+```bash
+systemctl restart mariadb
+```
 
